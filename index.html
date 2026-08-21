@@ -48,7 +48,9 @@ function text(t,x,y,color=C.ink,align='center',size=15,weight=650){ctx.fillStyle
 function draw(){const{w,h,cx,cy,R}=geom();ctx.clearRect(0,0,w,h);line(cx-R-35,cy,cx+R+35,cy,C.ink,1.5);line(cx,cy+R+35,cx,cy-R-35,C.ink,1.5);text('x',cx+R+29,cy-14,C.muted);text('y',cx+12,cy-R-28,C.muted);
  ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle=C.ink;ctx.lineWidth=2.2;ctx.stroke();
  text('(1,0)',cx+R+8,cy+22,C.ink,'left',13);text('(-1,0)',cx-R-8,cy+22,C.ink,'right',13);text('(0,1)',cx,cy-R-26,C.ink,'center',13);text('(0,-1)',cx,cy+R+27,C.ink,'center',13);
- const x=cx+Math.cos(theta)*R,y=cy-Math.sin(theta)*R;line(x,y,x,cy,C.blue,5);line(cx,cy,x,y,C.ink,2);line(cx,cy,x,cy,C.red,5);
+ const x=cx+Math.cos(theta)*R,y=cy-Math.sin(theta)*R;
+ line(x,y,x,cy,C.grid,1.5,[6,6]);line(x,y,cx,y,C.grid,1.5,[6,6]);
+ line(cx,cy,x,cy,C.blue,5);line(cx,cy,cx,y,C.red,5);line(cx,cy,x,y,C.ink,2);
  ctx.beginPath();ctx.arc(cx,cy,Math.min(R*.23,42),-theta,0);ctx.strokeStyle=C.gold;ctx.lineWidth=4;ctx.stroke();text('θ',cx+Math.cos(theta/2)*R*.31,cy-Math.sin(theta/2)*R*.31,'#8d6a19');
  ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fillStyle=C.paper;ctx.fill();ctx.strokeStyle=C.ink;ctx.lineWidth=4;ctx.stroke();text('P',x+(Math.cos(theta)>=0?16:-16),y-17,C.ink,Math.cos(theta)>=0?'left':'right',16,800);
  const label=`(cos θ, sin θ)`;text(label,x+(Math.cos(theta)>=0?17:-17),y+21,C.muted,Math.cos(theta)>=0?'left':'right',13,650);
