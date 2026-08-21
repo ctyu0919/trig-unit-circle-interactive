@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f5f1e8">
+  <title>互動式單位圓｜認識 sin θ 與 cos θ</title>
+  <meta name="description" content="拖曳單位圓上的 P 點，觀察角度、cos θ 與 sin θ 的座標投影。">
+  <style>
+    :root{--ink:#17223b;--muted:#60708d;--paper:#fffdf8;--ground:#f2ede3;--blue:#1769d2;--red:#dd3e45;--gold:#e7b84b;--line:#d9d2c5}
+    *{box-sizing:border-box} body{margin:0;min-height:100svh;background:radial-gradient(circle at 10% 0,#fffaf0 0,transparent 40%),var(--ground);color:var(--ink);font-family:ui-rounded,"Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif}
+    main{width:min(1120px,100%);margin:auto;padding:clamp(18px,4vw,48px)}
+    header{margin-bottom:clamp(18px,3vw,34px)} .eyebrow{font-size:.78rem;font-weight:800;letter-spacing:.18em;color:#8d6a19;text-transform:uppercase} h1{font-size:clamp(2rem,5vw,4.4rem);line-height:1.03;margin:.18em 0 .22em;letter-spacing:-.04em} header p{margin:0;color:var(--muted);font-size:clamp(1rem,2vw,1.22rem)}
+    .card{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(250px,.65fr);gap:clamp(18px,3vw,34px);background:var(--paper);border:1px solid #e4ded3;border-radius:28px;padding:clamp(16px,3vw,32px);box-shadow:0 20px 60px #74674e1a}
+    .stage{min-width:0;display:grid;place-items:center;background:#fbf8f1;border:1px solid #e7e0d4;border-radius:20px;aspect-ratio:1/1;overflow:hidden;touch-action:none;user-select:none}
+    canvas{width:100%;height:100%;display:block;cursor:grab} canvas.dragging{cursor:grabbing}
+    aside{display:flex;flex-direction:column;justify-content:center;gap:14px}.hint{padding:15px 17px;border-radius:15px;background:#f0eadf;color:#5b5360;line-height:1.55}.hint strong{color:var(--ink)}
+    .readout{border-radius:18px;padding:17px 18px;background:white;border:1px solid var(--line)} .readout span{display:block;color:var(--muted);font-size:.82rem;font-weight:750;letter-spacing:.08em}.readout output{display:block;margin-top:5px;font:800 clamp(1.4rem,4vw,2rem)/1.2 ui-monospace,SFMono-Regular,Consolas,monospace}
+    .angle{border-left:5px solid var(--gold)}.cos{border-left:5px solid var(--blue)}.cos output{color:var(--blue)}.sin{border-left:5px solid var(--red)}.sin output{color:var(--red)}
+    .legend{display:flex;gap:18px;flex-wrap:wrap;color:var(--muted);font-size:.86rem}.legend i{display:inline-block;width:12px;height:12px;border-radius:99px;margin-right:6px;vertical-align:-1px}.legend .b{background:var(--blue)}.legend .r{background:var(--red)}
+    footer{text-align:center;color:var(--muted);font-size:.82rem;padding:20px 0 0}
+    @media(max-width:760px){main{padding:16px}.card{grid-template-columns:1fr;border-radius:22px}.stage{width:100%}aside{display:grid;grid-template-columns:1fr 1fr}.hint,.legend{grid-column:1/-1}.readout{padding:13px 14px}.readout:first-of-type{grid-column:1/-1}h1{letter-spacing:-.03em}}
+  </style>
+</head>
+<body>
+<main>
+  <header><div class="eyebrow">Trigonometry Lab</div><h1>拖曳 P 點，<br>看見 sin 與 cos</h1><p>單位圓上的座標，就是 <strong>(cos θ, sin θ)</strong>。</p></header>
+  <section class="card">
+    <div class="stage"><canvas id="circle" role="img" aria-label="可拖曳的互動式單位圓" tabindex="0"></canvas></div>
+    <aside>
+      <div class="hint"><strong>試著拖曳圓周上的 P 點</strong><br>藍線顯示 X 軸的 cos θ，紅線顯示 Y 軸的 sin θ。也可用方向鍵微調。</div>
+      <div class="readout angle"><span>角度 θ</span><output id="angle">40.0°</output></div>
+      <div class="readout cos"><span>cos θ・X 座標</span><output id="cos">0.766</output></div>
+      <div class="readout sin"><span>sin θ・Y 座標</span><output id="sin">0.643</output></div>
+      <div class="legend"><span><i class="b"></i>cos θ</span><span><i class="r"></i>sin θ</span></div>
+    </aside>
+  </section>
+  <footer>沒有自動旋轉，讓你用自己的節奏觀察每個角度。</footer>
+</main>
+<script>
+const canvas=document.querySelector('#circle'),ctx=canvas.getContext('2d');
+const angleOut=document.querySelector('#angle'),cosOut=document.querySelector('#cos'),sinOut=document.querySelector('#sin');let theta=40*Math.PI/180,drag=false;
+const C={ink:'#17223b',muted:'#60708d',blue:'#1769d2',red:'#dd3e45',gold:'#e7b84b',grid:'#d9d2c5',paper:'#fbf8f1'};
+function resize(){const r=canvas.getBoundingClientRect(),d=Math.min(devicePixelRatio||1,2);canvas.width=r.width*d;canvas.height=r.height*d;ctx.setTransform(d,0,0,d,0,0);draw()}
+function geom(){const w=canvas.clientWidth,h=canvas.clientHeight,cx=w/2,cy=h/2,R=Math.min(w,h)*.335;return{w,h,cx,cy,R}}
+function line(x1,y1,x2,y2,color,width=2,dash=[]){ctx.beginPath();ctx.setLineDash(dash);ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();ctx.setLineDash([])}
+function text(t,x,y,color=C.ink,align='center',size=15,weight=650){ctx.fillStyle=color;ctx.textAlign=align;ctx.textBaseline='middle';ctx.font=`${weight} ${size}px ui-rounded,"Noto Sans TC","Microsoft JhengHei",sans-serif`;ctx.fillText(t,x,y)}
+function draw(){const{w,h,cx,cy,R}=geom();ctx.clearRect(0,0,w,h);line(cx-R-35,cy,cx+R+35,cy,C.ink,1.5);line(cx,cy+R+35,cx,cy-R-35,C.ink,1.5);text('x',cx+R+29,cy-14,C.muted);text('y',cx+12,cy-R-28,C.muted);
+ ctx.beginPath();ctx.arc(cx,cy,R,0,Math.PI*2);ctx.strokeStyle=C.ink;ctx.lineWidth=2.2;ctx.stroke();
+ text('(1,0)',cx+R+8,cy+22,C.ink,'left',13);text('(-1,0)',cx-R-8,cy+22,C.ink,'right',13);text('(0,1)',cx,cy-R-26,C.ink,'center',13);text('(0,-1)',cx,cy+R+27,C.ink,'center',13);
+ const x=cx+Math.cos(theta)*R,y=cy-Math.sin(theta)*R;line(x,y,x,cy,C.blue,5);line(cx,cy,x,y,C.ink,2);line(cx,cy,x,cy,C.red,5);
+ ctx.beginPath();ctx.arc(cx,cy,Math.min(R*.23,42),-theta,0);ctx.strokeStyle=C.gold;ctx.lineWidth=4;ctx.stroke();text('θ',cx+Math.cos(theta/2)*R*.31,cy-Math.sin(theta/2)*R*.31,'#8d6a19');
+ ctx.beginPath();ctx.arc(x,y,10,0,Math.PI*2);ctx.fillStyle=C.paper;ctx.fill();ctx.strokeStyle=C.ink;ctx.lineWidth=4;ctx.stroke();text('P',x+(Math.cos(theta)>=0?16:-16),y-17,C.ink,Math.cos(theta)>=0?'left':'right',16,800);
+ const label=`(cos θ, sin θ)`;text(label,x+(Math.cos(theta)>=0?17:-17),y+21,C.muted,Math.cos(theta)>=0?'left':'right',13,650);
+ const deg=(theta*180/Math.PI+360)%360;angleOut.value=`${deg.toFixed(1)}°`;cosOut.value=Math.cos(theta).toFixed(3);sinOut.value=Math.sin(theta).toFixed(3)}
+function setFromEvent(e){const r=canvas.getBoundingClientRect(),{cx,cy}=geom(),x=e.clientX-r.left-cx,y=cy-(e.clientY-r.top);theta=Math.atan2(y,x);if(theta<0)theta+=Math.PI*2;draw()}
+canvas.addEventListener('pointerdown',e=>{drag=true;canvas.setPointerCapture(e.pointerId);canvas.classList.add('dragging');setFromEvent(e)});canvas.addEventListener('pointermove',e=>{if(drag)setFromEvent(e)});canvas.addEventListener('pointerup',()=>{drag=false;canvas.classList.remove('dragging')});canvas.addEventListener('pointercancel',()=>{drag=false;canvas.classList.remove('dragging')});
+canvas.addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;e.preventDefault();theta+=(e.key==='ArrowRight'||e.key==='ArrowUp'?1:-1)*Math.PI/180;theta=(theta+Math.PI*2)%(Math.PI*2);draw()});
+new ResizeObserver(resize).observe(canvas);resize();
+</script>
+</body></html>
+
